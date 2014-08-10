@@ -2,9 +2,9 @@
 
 var find  = require('.')
 var debug = require('gulp-debug')
+var drain = require('./drain')
 
-var argv = require('yargs')
-  .argv
+var argv = require('yargs').argv
 
-find({start: argv._}).pipe(debug())
+find({start: argv._}).pipe(debug()).pipe(drain.objs)
 

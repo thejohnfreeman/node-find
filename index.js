@@ -53,7 +53,6 @@ function FindStream(opts) {
   })
   var self = this
   var done = function() {
-    console.log('closing')
     self.push(null)
   }
   this.pushLevel(/*prefix=*/'', /*entries=*/start, done)
@@ -104,7 +103,6 @@ FindStream.prototype.tryPushEntry = function tryPushEntry(entry, done) {
  */
 FindStream.prototype.pushEntry = function pushEntry(entry, done) {
   var self = this
-  console.log('pushing', entry.path)
   this.paused = !this.push(entry) || this.paused
   if (entry.stats.isDirectory()) {
     this.opts.fs.readdir(entry.path, function(err, entries) {
