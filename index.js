@@ -66,6 +66,11 @@ util.inherits(FindStream, Readable)
  * `tryPushEntry`. Call `done` after traversing every path.
  */
 FindStream.prototype.pushLevel = function pushLevel(prefix, names, done) {
+  if (names.length === 0) {
+    done()
+    return
+  }
+
   var self = this
   var bar = barrier(names.length, done)
   names.forEach(function(name) {
@@ -93,13 +98,13 @@ FindStream.prototype.tryPushEntry = function tryPushEntry(entry, done) {
 
 /**
  * Push entry downstream, and if it is a directory, call `pushLevel` on its
- * contents.
+ * contents. Call `done` after traversing subtree.
  * @return mayContinue True if the downstream will accept more entries without
  * pausing.
  */
 FindStream.prototype.pushEntry = function pushEntry(entry, done) {
   var self = this
-  console.log('pushing')
+  console.log('pushing', entry.path)
   this.paused = !this.push(entry) || this.paused
   if (entry.stats.isDirectory()) {
     this.opts.fs.readdir(entry.path, function(err, entries) {

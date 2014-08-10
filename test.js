@@ -1,5 +1,5 @@
-var gfind = require('.')
+var find  = require('.')
 var debug = require('gulp-debug')
 
-gfind().pipe(debug())
+find().pipe(debug())
 

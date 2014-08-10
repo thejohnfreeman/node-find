@@ -1,0 +1,10 @@
+#!/usr/bin/env NODE_PATH=.:$NODE_PATH node
+
+var find  = require('.')
+var debug = require('gulp-debug')
+
+var argv = require('yargs')
+  .argv
+
+find({start: argv._}).pipe(debug())
+
