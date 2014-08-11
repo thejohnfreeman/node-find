@@ -26,11 +26,11 @@ var Vinyl    = require('vinyl')
  */
 
 var defaultOpts = {
-  fs:    fs,
-  start: ['.'],
-  // Choose option names consistent with GNU find.
-  maxDepth: Number.MAX_VALUE,
+  fs:          fs,
+  start:       ['.'],
+  maxDepth:    Number.MAX_VALUE,
   insensitive: false,
+  prune:       {},
 }
 
 /**
@@ -46,31 +46,45 @@ function barrier(n, fn, ctx) {
   }
 }
 
-function glob2regex(glob) {
+/**
+ * @param glob String Shell glob expression.
+ * @param matchSep boolean True if wildcards should match the path component
+ * separator (e.g. '/' on Unix).
+ * @return regex
+ */
+function glob2regex(glob, matchSep) {
+  var any = matchSep ? '.' : '[^/]'
   return glob
   .replace(/(\\)?\*/, function($0, $1) {
-    return $1 ? $0 : '[^/]*'
+    return $1 ? $0 : (any + '*')
   })
   .replace(/(\\)?\?/, function($0, $1) {
-    return $1 ? $0 : '[^/]'
+    return $1 ? $0 : any
   })
 }
 
+function pathGlob2regex(glob) {
+  return glob2regex(glob, true)
+}
+
 var alwaysMatch = function() { return true }
+var neverMatch = function() { return false }
 
 function compilePathMatch(opts) {
-  var regex = null
+  var pats = []
   if (opts.name) {
-    regex = '^.*/(?:' + compilePathMatch1(opts.name, glob2regex) + ')$'
+    pats.push('^.*/(?:' + compilePathMatch1(opts.name, glob2regex) + ')$')
   }
-  if (regex) {
-    regex = new RegExp(regex, opts.insensitive ? 'i' : '')
-    return function(p) {
-      return regex.test(p)
-    }
-  } else {
-    return alwaysMatch
+  if (opts.path) {
+    pats.push('^(?:' + compilePathMatch1(opts.path, pathGlob2regex) + ')$')
   }
+  if (opts.regex) {
+    pats.push(compilePathMatch1(opts.regex))
+  if (!pats.length) {
+    return
+  }
+  pats = new RegExp(pats.join('|'), opts.insensitive ? 'i' : '')
+  return function(p) { return pats.test(p) }
 }
 
 function compilePathMatch1(pats, template) {
@@ -110,8 +124,9 @@ function FindStream(opts) {
   this.opts      = extend({}, defaultOpts, opts)
   this.paused    = false
   this.buffer    = []
-  this.pathMatch = compilePathMatch(this.opts)
+  this.pathMatch = compilePathMatch(this.opts) || alwaysMatch
   this.typeMatch = compileTypeMatch(this.opts)
+  this.pruneMatch = compilePathMatch(this.opts.prune) || neverMatch
 
   var start = this.opts.start.map(function(name) {
     return path.resolve(process.cwd(), name)
@@ -139,6 +154,10 @@ FindStream.prototype.pushLevel = function pushLevel(level, prefix, names, done) 
   var bar = barrier(names.length, done)
   names.forEach(function(name) {
     var fullPath = path.join(prefix, name)
+    if (self.pruneMatch(fullPath)) {
+      bar()
+      return
+    }
     self.opts.fs.lstat(fullPath, function(err, stats) {
       if (err) {
         self.emit('error', err)

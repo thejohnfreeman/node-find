@@ -15,6 +15,9 @@ var argv = require('yargs')
 .describe('type', 'True if the file is of the given type.')
 .describe('name',
   'True if given glob pattern matches the last component of the path.')
+.describe('prune.{name|path|regex}',
+  'False if matches any component of the path.'
+  + ' Used to avoid traversing branches of the tree.')
 .help('help', 'Show this help and exit.')
 .wrap(80)
 .argv
