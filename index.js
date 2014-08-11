@@ -28,6 +28,9 @@ var Vinyl    = require('vinyl')
 var defaultOpts = {
   fs:    fs,
   start: ['.'],
+  // Choose option names consistent with GNU find.
+  maxDepth: Number.MAX_VALUE,
+  insensitive: false,
 }
 
 /**
@@ -43,11 +46,49 @@ function barrier(n, fn, ctx) {
   }
 }
 
+function glob2regex(glob) {
+  return glob
+  .replace(/(\\)?\*/, function($0, $1) {
+    return $1 ? $0 : '[^/]*'
+  })
+  .replace(/(\\)?\?/, function($0, $1) {
+    return $1 ? $0 : '[^/]'
+  })
+}
+
+var alwaysMatcher = {
+  test: function() { return true }
+}
+
+function compileMatcher(opts) {
+  var regex = null
+  if (opts.name) {
+    regex = '^.*/(?:' + compileMatcher1(opts.name, glob2regex) + ')$'
+  }
+  return regex
+    ? new RegExp(regex, opts.insensitive ? 'i' : '')
+    : alwaysMatcher
+}
+
+function compileMatcher1(pats, template) {
+  if (!util.isArray(pats)) {
+    pats = [pats]
+  }
+  if (template) {
+    pats = pats.map(template)
+  }
+  return pats
+  .map(function(pat) { return '(?:' + pat + ')' })
+  .join('|')
+}
+
 function FindStream(opts) {
   Readable.call(this, {objectMode: true})
   this.opts   = extend({}, defaultOpts, opts)
   this.paused = false
   this.buffer = []
+  this.match  = compileMatcher(this.opts)
+
   var start = this.opts.start.map(function(name) {
     return path.resolve(process.cwd(), name)
   })
@@ -55,7 +96,7 @@ function FindStream(opts) {
   var done = function() {
     self.push(null)
   }
-  this.pushLevel(/*prefix=*/'', /*entries=*/start, done)
+  this.pushLevel(/*level=*/0, /*prefix=*/'', /*entries=*/start, done)
 }
 
 util.inherits(FindStream, Readable)
@@ -64,8 +105,8 @@ util.inherits(FindStream, Readable)
  * lstat every path in `names` (prefixed by `prefix`), and pass to
  * `tryPushEntry`. Call `done` after traversing every path.
  */
-FindStream.prototype.pushLevel = function pushLevel(prefix, names, done) {
-  if (names.length === 0) {
+FindStream.prototype.pushLevel = function pushLevel(level, prefix, names, done) {
+  if (level > this.opts.maxDepth || !names.length) {
     done()
     return
   }
@@ -78,7 +119,11 @@ FindStream.prototype.pushLevel = function pushLevel(prefix, names, done) {
       if (err) {
         self.emit('error', err)
       }
-      self.tryPushEntry({path: fullPath, stats: stats}, bar)
+      self.tryPushEntry({
+        value: {path: fullPath, stats: stats},
+        done: bar,
+        level: level,
+      })
     })
   })
 }
@@ -87,11 +132,11 @@ FindStream.prototype.pushLevel = function pushLevel(prefix, names, done) {
  * Buffer `entry` if the stream is paused, otherwise pass to `pushEntry`.
  * Call `done` after pushing.
  */
-FindStream.prototype.tryPushEntry = function tryPushEntry(entry, done) {
+FindStream.prototype.tryPushEntry = function tryPushEntry(entry) {
   if (this.paused) {
-    this.buffer.push({entry: entry, done: done})
+    this.buffer.push(entry)
   } else {
-    this.pushEntry(entry, done)
+    this.pushEntry(entry)
   }
 }
 
@@ -101,18 +146,21 @@ FindStream.prototype.tryPushEntry = function tryPushEntry(entry, done) {
  * @return mayContinue True if the downstream will accept more entries without
  * pausing.
  */
-FindStream.prototype.pushEntry = function pushEntry(entry, done) {
+FindStream.prototype.pushEntry = function pushEntry(entry) {
   var self = this
-  this.paused = !this.push(entry) || this.paused
-  if (entry.stats.isDirectory()) {
-    this.opts.fs.readdir(entry.path, function(err, entries) {
+  var value = entry.value
+  if (this.match.test(value.path)) {
+    this.paused = !this.push(value) || this.paused
+  }
+  if (value.stats.isDirectory()) {
+    this.opts.fs.readdir(value.path, function(err, entries) {
       if (err) {
         self.emit('error', err)
       }
-      self.pushLevel(entry.path, entries, done)
+      self.pushLevel(entry.level + 1, value.path, entries, entry.done)
     })
   } else {
-    done()
+    entry.done()
   }
   return !this.paused
 }
@@ -120,8 +168,7 @@ FindStream.prototype.pushEntry = function pushEntry(entry, done) {
 FindStream.prototype._read = function _read(size) {
   this.paused = false
   while (size-- && this.buffer.length) {
-    var front = buffer.shift()
-    if (!this.pushEntry(front.entry, front.done)) {
+    if (!this.pushEntry(buffer.shift())) {
       return
     }
   }
