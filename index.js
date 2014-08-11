@@ -30,6 +30,9 @@ var defaultOpts = {
   start:       ['.'],
   maxDepth:    Number.MAX_VALUE,
   insensitive: false,
+  name:        undefined,
+  path:        undefined,
+  regex:       undefined,
   prune:       {},
 }
 
