@@ -56,21 +56,24 @@ function glob2regex(glob) {
   })
 }
 
-var alwaysMatcher = {
-  test: function() { return true }
-}
+var alwaysMatch = function() { return true }
 
-function compileMatcher(opts) {
+function compilePathMatch(opts) {
   var regex = null
   if (opts.name) {
-    regex = '^.*/(?:' + compileMatcher1(opts.name, glob2regex) + ')$'
+    regex = '^.*/(?:' + compilePathMatch1(opts.name, glob2regex) + ')$'
   }
-  return regex
-    ? new RegExp(regex, opts.insensitive ? 'i' : '')
-    : alwaysMatcher
+  if (regex) {
+    regex = new RegExp(regex, opts.insensitive ? 'i' : '')
+    return function(p) {
+      return regex.test(p)
+    }
+  } else {
+    return alwaysMatch
+  }
 }
 
-function compileMatcher1(pats, template) {
+function compilePathMatch1(pats, template) {
   if (!util.isArray(pats)) {
     pats = [pats]
   }
@@ -82,12 +85,33 @@ function compileMatcher1(pats, template) {
   .join('|')
 }
 
+var TEST_METHOD_NAME_FOR_TYPE = {
+  b: 'isBlockDevice',
+  c: 'isCharacterDevice',
+  d: 'isDirectory',
+  f: 'isFile',
+  l: 'isSymbolicLink',
+  p: 'isFIFO',
+  s: 'isSocket',
+}
+
+function compileTypeMatch(opts) {
+  if (!opts.type) {
+    return alwaysMatch
+  }
+  var method = TEST_METHOD_NAME_FOR_TYPE[opts.type]
+  return function(stats) {
+    return stats[method]()
+  }
+}
+
 function FindStream(opts) {
   Readable.call(this, {objectMode: true})
-  this.opts   = extend({}, defaultOpts, opts)
-  this.paused = false
-  this.buffer = []
-  this.match  = compileMatcher(this.opts)
+  this.opts      = extend({}, defaultOpts, opts)
+  this.paused    = false
+  this.buffer    = []
+  this.pathMatch = compilePathMatch(this.opts)
+  this.typeMatch = compileTypeMatch(this.opts)
 
   var start = this.opts.start.map(function(name) {
     return path.resolve(process.cwd(), name)
@@ -149,7 +173,7 @@ FindStream.prototype.tryPushEntry = function tryPushEntry(entry) {
 FindStream.prototype.pushEntry = function pushEntry(entry) {
   var self = this
   var value = entry.value
-  if (this.match.test(value.path)) {
+  if (this.pathMatch(value.path) && this.typeMatch(value.stats)) {
     this.paused = !this.push(value) || this.paused
   }
   if (value.stats.isDirectory()) {

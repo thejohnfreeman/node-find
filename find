@@ -7,11 +7,16 @@ var through = require('through2')
 
 var argv = require('yargs')
 .demand(1)
-.usage('$0 [options] path [path...]')
+.usage('$0 [options] path [path...]\n\n'
+  + 'All filters like name, path, and regex will be taken as a disjunction.')
 .describe('max-depth', 'Limit depth of recursion.')
 .alias('insensitive', 'i')
 .describe('insensitive', 'Turn off case sensitivity.')
+.describe('type', 'True if the file is of the given type.')
+.describe('name',
+  'True if given glob pattern matches the last component of the path.')
 .help('help', 'Show this help and exit.')
+.wrap(80)
 .argv
 
 var opts = argv
