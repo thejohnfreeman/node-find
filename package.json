@@ -2,12 +2,27 @@
   "name": "node-find",
   "version": "0.0.0",
   "description": "Approximation of GNU find as a vinyl file stream.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "homepage": "http://github.com/thejohnfreeman/node-find",
+  "repository": "git://github.com/thejohnfreeman/node-find.git",
+  "author": {
+    "name": "John Freeman",
+    "email": "jfreeman08@gmail.com",
+    "url": "http://thejohnfreeman.com"
   },
-  "author": "John Freeman",
-  "license": "MIT",
+  "keywords": [
+    "find",
+    "walk",
+    "traverse",
+    "traversal",
+    "recurse",
+    "recursive",
+    "directory",
+    "files",
+    "gulp",
+    "stream",
+    "readable"
+  ],
+  "main": "index.js",
   "optionalDependencies": {
     "graceful-fs": "~3.0.2"
   },
@@ -20,5 +35,6 @@
   "devDependencies": {
     "gulp-debug": "~1.0.0",
     "yargs": "~1.3.1"
-  }
+  },
+  "license": "MIT"
 }
