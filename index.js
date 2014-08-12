@@ -28,7 +28,7 @@ var Vinyl    = require('vinyl')
 var defaultOpts = {
   fs:          fs,
   start:       ['.'],
-  maxDepth:    Number.MAX_VALUE,
+  maxDepth:    Infinity,
   filter:      function() { return true },
   prune:       function() { return false },
 }
@@ -142,6 +142,9 @@ FindStream.prototype._read = function _read(size) {
 }
 
 function find(opts) {
+  if (typeof opts === 'string') {
+    opts = {start: Array.prototype.slice.call(opts)}
+  }
   return new FindStream(opts)
   .pipe(through.obj(function(entry, enc, cb) {
     cb(null, new Vinyl({path: entry.path}))
