@@ -4,6 +4,7 @@ var find    = require('.')
 var debug   = require('gulp-debug')
 var drain   = require('./drain')
 var through = require('through2')
+var args    = require('./args')
 
 var argv = require('yargs')
 .demand(1)
@@ -15,6 +16,11 @@ var argv = require('yargs')
 .describe('type', 'True if the file is of the given type.')
 .describe('name',
   'True if given glob pattern matches the last component of the path.')
+.describe('path',
+  'True if given glob pattern matches the full path.'
+  + ' Wildcards match directory separators.')
+.describe('regex',
+  'True if given regex matches the full path.')
 .describe('prune.{name|path|regex}',
   'False if matches any component of the path.'
   + ' Used to avoid traversing branches of the tree.')
@@ -23,7 +29,19 @@ var argv = require('yargs')
 .argv
 
 var opts = argv
+
 opts.start = argv._
+
+var constTrue = function() { return true }
+var constFalse = function() { return false }
+
+var pathMatch = args.compilePathMatch(opts) || constTrue
+var typeMatch = args.compileTypeMatch(opts) || constTrue
+opts.filter = function(path, stats) {
+  return pathMatch(path) && typeMatch(stats)
+}
+
+opts.prune = args.compilePathMatch(opts.prune || {}) || constFalse
 
 find(opts)
 .pipe(through.obj(function(entry, enc, next) {
