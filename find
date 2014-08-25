@@ -1,10 +1,7 @@
 #!/usr/bin/env NODE_PATH=.:$NODE_PATH node
 
 var find    = require('.')
-var debug   = require('gulp-debug')
-var drain   = require('./drain')
 var through = require('through2')
-var args    = require('./args')
 
 var argv = require('yargs')
 .demand(1)
@@ -29,24 +26,11 @@ var argv = require('yargs')
 .argv
 
 var opts = argv
-
-opts.start = argv._
-
-var constTrue = function() { return true }
-var constFalse = function() { return false }
-
-var pathMatch = args.compilePathMatch(opts) || constTrue
-var typeMatch = args.compileTypeMatch(opts) || constTrue
-opts.filter = function(path, stats) {
-  return pathMatch(path) && typeMatch(stats)
-}
-
-opts.prune = args.compilePathMatch(opts.prune || {}) || constFalse
+opts.paths = argv._
 
 find(opts)
-.pipe(through.obj(function(entry, enc, next) {
-  console.log(entry.path)
-  next()
+.pipe(through.obj(function(file, enc, done) {
+  console.log(file.path)
+  done()
 }))
-.pipe(drain.objs)
 

@@ -1,6 +1,6 @@
 var extend   = require('extend')
 var fs       = require('graceful-fs') || require('fs')
-var path     = require('path')
+var Path     = require('path')
 var Readable = require('readable-stream').Readable
 var util     = require('util')
 var through  = require('through2')
@@ -27,10 +27,12 @@ var Vinyl    = require('vinyl')
 
 var defaultOpts = {
   fs:          fs,
-  start:       ['.'],
+  paths:       ['.'],
   maxDepth:    Infinity,
-  filter:      function() { return true },
-  prune:       function() { return false },
+  filter:      function(stream, file) {
+    stream.accept(file)
+    stream.recurse(file)
+  },
 }
 
 /**
@@ -49,106 +51,99 @@ function barrier(n, fn, ctx) {
 function FindStream(opts) {
   Readable.call(this, {objectMode: true})
   this.opts      = extend({}, defaultOpts, opts)
-  this.paused    = false
+  this.flowing   = false
   this.buffer    = []
 
-  var start = this.opts.start.map(function(name) {
-    return path.resolve(process.cwd(), name)
+  var paths = this.opts.paths.map(function(name) {
+    return Path.resolve(process.cwd(), name)
   })
   var self = this
   var done = function() {
     self.push(null)
   }
-  this.pushLevel(/*level=*/0, /*prefix=*/'', /*entries=*/start, done)
+  this.enqueue(/*level=*/0, /*prefix=*/'', /*paths=*/paths, done)
 }
 
 util.inherits(FindStream, Readable)
 
 /**
- * lstat every path in `names` (prefixed by `prefix`), and pass to
- * `tryPushEntry`. Call `done` after traversing every path.
+ * Do nothing if `level` greater than maximum allowed depth. Otherwise,
+ * lstat every path in `paths` (prefixed by `prefix`), and append to the
+ * buffer. Wait until next call to `_read` before pushing any files
+ * downstream. Call `done` after traversing every path.
+ * @private
  */
-FindStream.prototype.pushLevel = function pushLevel(level, prefix, names, done) {
-  if (level > this.opts.maxDepth || !names.length) {
-    done()
-    return
+FindStream.prototype.enqueue = function enqueue(level, prefix, paths, done) {
+  if (!paths.length) {
+    return done()
   }
 
   var self = this
-  var bar = barrier(names.length, done)
-  names.forEach(function(name) {
-    var fullPath = path.join(prefix, name)
-    self.opts.fs.lstat(fullPath, function(err, stats) {
+  var bar = barrier(paths.length, done)
+  paths.forEach(function(path) {
+    path = Path.join(prefix, path)
+    self.opts.fs.lstat(path, function(err, stats) {
       if (err) {
         self.emit('error', err)
       }
-      if (self.opts.prune(fullPath, stats)) {
-        bar()
-        return
-      }
-      self.tryPushEntry({
-        value: {path: fullPath, stats: stats},
+      self.buffer.push({
+        path: path,
+        recurse: true,
+        stats: stats,
         done: bar,
         level: level,
       })
+      if (self.flowing) {
+        self._read(self.buffer.length)
+      }
     })
   })
 }
 
 /**
- * Buffer `entry` if the stream is paused, otherwise pass to `pushEntry`.
- * Call `done` after pushing.
+ * Resume flowing unconditionally.
+ * @private
  */
-FindStream.prototype.tryPushEntry = function tryPushEntry(entry) {
-  if (this.paused) {
-    this.buffer.push(entry)
-  } else {
-    this.pushEntry(entry)
+FindStream.prototype._read = function _read(size) {
+  this.flowing = true
+  while (size-- && this.buffer.length) {
+    this.opts.filter(this, this.buffer.shift())
   }
 }
 
 /**
- * Push entry downstream, and if it is a directory, call `pushLevel` on its
- * contents. Call `done` after traversing subtree.
- * @return mayContinue True if the downstream will accept more entries without
- * pausing.
+ * Push file downstream. Called from filter function after `file` was popped
+ * from buffer, so this function should not touch the buffer.
  */
-FindStream.prototype.pushEntry = function pushEntry(entry) {
-  var self = this
-  var value = entry.value
-  if (this.opts.filter(value.path, value.stats)) {
-    this.paused = !this.push(value) || this.paused
-  }
-  if (value.stats.isDirectory()) {
-    this.opts.fs.readdir(value.path, function(err, entries) {
-      if (err) {
-        self.emit('error', err)
-      }
-      self.pushLevel(entry.level + 1, value.path, entries, entry.done)
-    })
-  } else {
-    entry.done()
-  }
-  return !this.paused
+FindStream.prototype.accept = function accept(file) {
+  this.flowing = this.push(new Vinyl({path: file.path}))
 }
 
-FindStream.prototype._read = function _read(size) {
-  this.paused = false
-  while (size-- && this.buffer.length) {
-    if (!this.pushEntry(buffer.shift())) {
-      return
-    }
+/**
+ * Continue recursive search, unless directory is marked do-not-recurse.
+ */
+FindStream.prototype.recurse = function recurse(file) {
+  if (!file.recurse
+      || file.level >= this.opts.maxDepth
+      || !file.stats.isDirectory())
+  {
+    return file.done()
   }
+
+  var self = this
+  this.opts.fs.readdir(file.path, function(err, files) {
+    if (err) {
+      self.emit('error', err)
+    }
+    self.enqueue(file.level + 1, file.path, files, file.done)
+  })
 }
 
 function find(opts) {
   if (typeof opts === 'string') {
-    opts = {start: Array.prototype.slice.call(opts)}
+    opts = {paths: Array.prototype.slice.call(opts)}
   }
   return new FindStream(opts)
-  .pipe(through.obj(function(entry, enc, cb) {
-    cb(null, new Vinyl({path: entry.path}))
-  }))
 }
 
 module.exports = find
