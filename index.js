@@ -1,9 +1,9 @@
+var compile  = require('./compile')
 var extend   = require('extend')
 var fs       = require('graceful-fs') || require('fs')
 var Path     = require('path')
 var Readable = require('readable-stream').Readable
 var util     = require('util')
-var through  = require('through2')
 var Vinyl    = require('vinyl')
 
 /* A Stream can be turned into an EventEmitter, but not vice versa, because
@@ -53,6 +53,10 @@ function FindStream(opts) {
   this.opts      = extend({}, defaultOpts, opts)
   this.flowing   = false
   this.buffer    = []
+
+  if (this.opts.expr) {
+    this.opts.filter = compile(this.opts.expr)
+  }
 
   var paths = this.opts.paths.map(function(name) {
     return Path.resolve(process.cwd(), name)

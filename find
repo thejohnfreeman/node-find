@@ -27,6 +27,7 @@ var argv = require('yargs')
 
 var opts = argv
 opts.paths = argv._
+opts.expr = [{type: 'd'}, 'accept']
 
 find(opts)
 .pipe(through.obj(function(file, enc, done) {
