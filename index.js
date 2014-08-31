@@ -25,6 +25,29 @@ var Vinyl    = require('vinyl')
  * : cannot prune branches
  */
 
+/**
+ * @property base String path where the search started.
+ * @property ppbase String pretty-printed form of `base`, passed by the user.
+ * @property path String path to the file.
+ * @property level number the file's depth in the search tree.
+ */
+function File(base, ppbase, path, level) {
+  Vinyl.call(this, {base: base, path: path})
+  this.ppbase = ppbase
+  this.level  = level
+}
+
+util.inherits(File, Vinyl)
+
+File.prototype.child = function child(fname) {
+  var path = Path.join(this.path, fname)
+  return new File(this.base, this.ppbase, path, this.level + 1)
+}
+
+File.prototype.pppath = function pppath() {
+  return this.path.replace(this.base, this.ppbase)
+}
+
 var defaultOpts = {
   fs:          fs,
   paths:       ['.'],
@@ -58,48 +81,45 @@ function FindStream(opts) {
     this.opts.filter = compile(this.opts.expr)
   }
 
-  var paths = this.opts.paths.map(function(name) {
-    return Path.resolve(process.cwd(), name)
+  var files = this.opts.paths.map(function(ppbase) {
+    var path = Path.resolve(process.cwd(), ppbase)
+    return new File(path, ppbase, path, /*level=*/0)
   })
   var self = this
   var done = function() {
     self.push(null)
   }
-  this.enqueue(/*level=*/0, /*base=*/null, /*prefix=*/'', paths, done)
+  this.enqueue(files, done)
 }
 
 util.inherits(FindStream, Readable)
 
 /**
- * Do nothing if `level` greater than maximum allowed depth. Otherwise,
- * lstat every path in `paths` (prefixed by `prefix`), and append to the
- * buffer. Wait until next call to `_read` before pushing any files
- * downstream. Call `done` after traversing every path.
+ * lstat every file in `files`, and append to the buffer. Wait until next
+ * call to `_read` before pushing any files downstream. Call `done` after
+ * traversing every path.
  * @private
  */
-FindStream.prototype.enqueue = function enqueue(
-  level, base, prefix, paths, done)
-{
-  if (!paths.length) {
+FindStream.prototype.enqueue = function enqueue(files, done) {
+  if (!files.length) {
     return done()
   }
 
+  // Done only after all subpaths are done.
+  var bar = barrier(files.length, done)
+
   var self = this
-  var bar = barrier(paths.length, done)
-  paths.forEach(function(path) {
-    path = Path.join(prefix, path)
-    self.opts.fs.lstat(path, function(err, stats) {
+  files.forEach(function(file) {
+    self.opts.fs.lstat(file.path, function(err, stats) {
       if (err) {
         self.emit('error', err)
       }
-      self.buffer.push({
-        base: base ? base : path,
-        path: path,
-        recurse: true,
-        stats: stats,
-        done: bar,
-        level: level,
-      })
+
+      file.recurse = true
+      file.stats   = stats
+      file.done    = bar
+      self.buffer.push(file)
+
       if (self.flowing) {
         self._read(self.buffer.length)
       }
@@ -123,7 +143,7 @@ FindStream.prototype._read = function _read(size) {
  * from buffer, so this function should not touch the buffer.
  */
 FindStream.prototype.accept = function accept(file) {
-  this.flowing = this.push(new Vinyl({base: file.base, path: file.path}))
+  this.flowing = this.push(file)
 }
 
 /**
@@ -138,11 +158,12 @@ FindStream.prototype.recurse = function recurse(file) {
   }
 
   var self = this
-  this.opts.fs.readdir(file.path, function(err, files) {
+  this.opts.fs.readdir(file.path, function(err, fnames) {
     if (err) {
       self.emit('error', err)
     }
-    self.enqueue(file.level + 1, file.base, file.path, files, file.done)
+    var files = fnames.map(file.child.bind(file))
+    self.enqueue(files, file.done)
   })
 }
 
