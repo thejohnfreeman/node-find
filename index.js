@@ -65,7 +65,7 @@ function FindStream(opts) {
   var done = function() {
     self.push(null)
   }
-  this.enqueue(/*level=*/0, /*prefix=*/'', /*paths=*/paths, done)
+  this.enqueue(/*level=*/0, /*base=*/null, /*prefix=*/'', paths, done)
 }
 
 util.inherits(FindStream, Readable)
@@ -77,7 +77,9 @@ util.inherits(FindStream, Readable)
  * downstream. Call `done` after traversing every path.
  * @private
  */
-FindStream.prototype.enqueue = function enqueue(level, prefix, paths, done) {
+FindStream.prototype.enqueue = function enqueue(
+  level, base, prefix, paths, done)
+{
   if (!paths.length) {
     return done()
   }
@@ -91,6 +93,7 @@ FindStream.prototype.enqueue = function enqueue(level, prefix, paths, done) {
         self.emit('error', err)
       }
       self.buffer.push({
+        base: base ? base : path,
         path: path,
         recurse: true,
         stats: stats,
@@ -120,7 +123,7 @@ FindStream.prototype._read = function _read(size) {
  * from buffer, so this function should not touch the buffer.
  */
 FindStream.prototype.accept = function accept(file) {
-  this.flowing = this.push(new Vinyl({path: file.path}))
+  this.flowing = this.push(new Vinyl({base: file.base, path: file.path}))
 }
 
 /**
@@ -139,12 +142,16 @@ FindStream.prototype.recurse = function recurse(file) {
     if (err) {
       self.emit('error', err)
     }
-    self.enqueue(file.level + 1, file.path, files, file.done)
+    self.enqueue(file.level + 1, file.base, file.path, files, file.done)
   })
 }
 
 function find(opts) {
-  if (typeof opts === 'string') {
+  if (typeof opts === 'undefined') {
+    opts = {paths: ['.']}
+  } else if (typeof opts === 'string') {
+    opts = {paths: [opts]}
+  } else if (Array.isArray(opts)) {
     opts = {paths: Array.prototype.slice.call(opts)}
   }
   return new FindStream(opts)
