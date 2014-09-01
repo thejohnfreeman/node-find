@@ -4,9 +4,9 @@ var should   = require('should')
 var through2 = require('through2')
 var terminus = require('terminus')
 
-function test(desc, tree, expr, paths) {
+function testWith(desc, opts, paths) {
   it(desc, function(done) {
-    find({paths: ['/'], fs: new Fs(tree), expr: expr})
+    find(opts)
     .pipe(terminus.concat({objectMode: true}, function(files) {
       files.length.should.equal(paths.length)
       files.forEach(function(file) {
@@ -17,10 +17,20 @@ function test(desc, tree, expr, paths) {
   })
 }
 
+function test(desc, tree, expr, paths) {
+    testWith(desc,
+             /*opts=*/{paths: ['/'], fs: new Fs(tree), expr: expr},
+             paths)
+}
+
 describe('find', function() {
 
   test('should find everything by default',
        {}, ['accept'], ['/'])
+
+  testWith('should stop at max depth',
+           {paths: ['/'], fs: new Fs({'x': {'y': 0}}), maxDepth: 1},
+           ['/', '/x'])
 
   describe('name expression', function() {
     test('should match exactly',
