@@ -105,6 +105,15 @@ function compilePrune() {
   return pruneExpr
 }
 
+// not ---------------------------------------------------------------------
+
+function compileNot(expr) {
+  var func = compileExpr(expr)
+  return function notExpr(stream, file) {
+    return !func(stream, file)
+  }
+}
+
 // or ----------------------------------------------------------------------
 
 function compileOr(exprs) {
@@ -128,6 +137,7 @@ var COMPILERS = {
   'iname':  compileIname,
   'ipath':  compileIpath,
   'name':   compileName,
+  'not':    compileNot,
   'path':   compilePath,
   'prune':  compilePrune,
   'regex':  compileRegex,
