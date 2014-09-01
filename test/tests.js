@@ -4,11 +4,14 @@ var should   = require('should')
 var through2 = require('through2')
 var terminus = require('terminus')
 
-function test(desc, tree, expr, count) {
+function test(desc, tree, expr, paths) {
   it(desc, function(done) {
     find({paths: ['/'], fs: new Fs(tree), expr: expr})
     .pipe(terminus.concat({objectMode: true}, function(files) {
-      files.length.should.equal(count)
+      files.length.should.equal(paths.length)
+      files.forEach(function(file) {
+        paths.should.containEql(file.path)
+      })
       done()
     }))
   })
@@ -17,27 +20,97 @@ function test(desc, tree, expr, count) {
 describe('find', function() {
 
   test('should find everything by default',
-       {}, ['accept'], 1)
+       {}, ['accept'], ['/'])
 
   describe('name expression', function() {
     test('should match exactly',
          {'a': 0, 'aa': 0, 'b': 0},
-         [{'name': 'a'}, 'accept'], 1)
+         [{'name': 'a'}, 'accept'],
+         ['/a'])
     test('should match trailing glob',
          {'a': 0, 'aa': 0, 'b': 0},
-         [{'name': 'a*'}, 'accept'], 2)
-    test('should match case-sensitively',
-         {'a': 0, 'A': 0},
-         [{'name': 'a'}, 'accept'], 1)
-    test('should match case-insensitively against lowercase',
-         {'a': 0, 'A': 0},
-         [{'iname': 'a'}, 'accept'], 2)
-    test('should match case-insensitively against uppercase',
-         {'a': 0, 'A': 0},
-         [{'iname': 'A'}, 'accept'], 2)
+         [{'name': 'a*'}, 'accept'],
+         ['/a', '/aa'])
     test('should match leading glob',
          {'a': 0, 'aa': 0, 'b': 0},
-         [{'name': '*a'}, 'accept'], 2)
+         [{'name': '*a'}, 'accept'],
+         ['/a', '/aa'])
+    test('should match case-sensitively',
+         {'a': 0, 'A': 0},
+         [{'name': 'a'}, 'accept'],
+         ['/a'])
+    test('should match case-insensitively against lowercase',
+         {'a': 0, 'A': 0},
+         [{'iname': 'a'}, 'accept'],
+         ['/a', '/A'])
+    test('should match case-insensitively against uppercase',
+         {'a': 0, 'A': 0},
+         [{'iname': 'A'}, 'accept'],
+         ['/a', '/A'])
+    test('should match directories',
+         {'x': {'x': 0}},
+         [{'name': 'x'}, 'accept'],
+         ['/x', '/x/x'])
+  })
+
+  describe('path expression', function() {
+    test('should match exactly',
+         {'x': {'a': 0}},
+         [{'path': '/x/a'}, 'accept'],
+         ['/x/a'])
+    test('should not match name',
+         {'x': {'a': 0}},
+         [{'path': 'a'}, 'accept'],
+         [])
+    test('should not match subpath',
+         {'x': {'a': 0}},
+         [{'path': 'x/a'}, 'accept'],
+         [])
+    test('should match trailing glob',
+         {'x': {'a': 0}},
+         [{'path': '/x*'}, 'accept'],
+         ['/x', '/x/a'])
+    test('should match leading glob',
+         {'x': {'a': 0}},
+         [{'path': '*a'}, 'accept'],
+         ['/x/a'])
+    test('should match case-sensitively',
+         {'x': {'a': 0}, 'X': {'A': 0}},
+         [{'path': '/x*'}, 'accept'],
+         ['/x', '/x/a'])
+    test('should match case-insensitively against lowercase',
+         {'x': {'a': 0}, 'X': {'A': 0}},
+         [{'ipath': '/x*'}, 'accept'],
+         ['/x', '/x/a', '/X', '/X/A'])
+    test('should match case-insensitively against uppercase',
+         {'x': {'a': 0}, 'X': {'A': 0}},
+         [{'ipath': '/X*'}, 'accept'],
+         ['/x', '/x/a', '/X', '/X/A'])
+  })
+
+  describe('prune expression', function() {
+    test('should remove matches',
+         {'x': {'x': 0}},
+         [{'name': 'x'}, 'prune', 'accept'],
+         ['/x'])
+    test('should not implicitly accept',
+         {'x': {'a': 0}, 'y': {'b': 0}},
+         {'or': [
+           [{'name': 'x'}, 'prune'],
+           'accept'
+         ]},
+         ['/', '/y', '/y/b'])
+  })
+
+  describe('type expression', function() {
+    test('should match directories',
+         {'x': 0},
+         [{'type': 'd'}, 'accept'],
+         ['/'])
+    test('should match files',
+         {'x': 0},
+         [{'type': 'f'}, 'accept'],
+         ['/x'])
   })
 
 })
