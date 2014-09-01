@@ -17,7 +17,7 @@ function Fs(tree) {
 Fs.prototype.find = function find(path) {
   var steps = path.split('/')
   if (steps[0] !== '') {
-    throw ('relative path in test: ' + path)
+    throw new Error('relative path in test: ' + path)
   }
   var file = this.tree
   for (var i = 1; i < steps.length; ++i) {
@@ -25,9 +25,9 @@ Fs.prototype.find = function find(path) {
     if (step === '') {
       continue
     }
-    file = file.entries ? file.entries[step] : undefined
-    if (!file) {
-      throw ('file does not exist: ' + path)
+    file = file[step]
+    if (typeof file === 'undefined') {
+      throw new Error('file does not exist: ' + path)
     }
   }
   return file
@@ -35,13 +35,13 @@ Fs.prototype.find = function find(path) {
 
 Fs.prototype.lstat = function lstat(path, done) {
   var file = this.find(path)
-  file = file.entries ? new File('d') : new File('f')
+  file = (typeof file === 'object') ? new File('d') : new File('f')
   done(null, file)
 }
 
 Fs.prototype.readdir = function readdir(path, done) {
   var dir = this.find(path)
-  files = Object.getOwnPropertyNames(dir.entries)
+  files = Object.getOwnPropertyNames(dir)
   done(null, files)
 }
 

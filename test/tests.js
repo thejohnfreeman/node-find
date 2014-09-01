@@ -4,51 +4,40 @@ var should   = require('should')
 var through2 = require('through2')
 var terminus = require('terminus')
 
-function expectCount(n, done) {
-  return terminus.concat({objectMode: true}, function(files) {
-    files.length.should.equal(n)
-    done()
+function test(desc, tree, expr, count) {
+  it(desc, function(done) {
+    find({paths: ['/'], fs: new Fs(tree), expr: expr})
+    .pipe(terminus.concat({objectMode: true}, function(files) {
+      files.length.should.equal(count)
+      done()
+    }))
   })
 }
 
 describe('find', function() {
-  var fs = new Fs({
-    entries: {
-      a: {
-        entries: {
-          x1: {},
-          x2: {},
-        }
-      },
-      b: {
-        entries: {
-          m: {},
-          n: {},
-        }
-      }
-    }
-  })
 
-  it('should find everything by default', function(done) {
-    find({paths: ['/'], fs: fs})
-    .pipe(expectCount(7, done))
-  })
+  test('should find everything by default',
+       {}, ['accept'], 1)
 
   describe('name expression', function() {
-    it('should match exactly', function(done) {
-      find({paths: ['/'], fs: fs, expr: [{'name': 'x1'}, 'accept']})
-      .pipe(expectCount(1, done))
-    })
-
-    it('should match trailing glob', function(done) {
-      find({paths: ['/'], fs: fs, expr: [{'name': 'x*'}, 'accept']})
-      .pipe(expectCount(2, done))
-    })
-
-    it('should match leading glob', function(done) {
-      find({paths: ['/'], fs: fs, expr: [{'name': '*1'}, 'accept']})
-      .pipe(expectCount(1, done))
-    })
+    test('should match exactly',
+         {'a': 0, 'aa': 0, 'b': 0},
+         [{'name': 'a'}, 'accept'], 1)
+    test('should match trailing glob',
+         {'a': 0, 'aa': 0, 'b': 0},
+         [{'name': 'a*'}, 'accept'], 2)
+    test('should match case-sensitively',
+         {'a': 0, 'A': 0},
+         [{'name': 'a'}, 'accept'], 1)
+    test('should match case-insensitively against lowercase',
+         {'a': 0, 'A': 0},
+         [{'iname': 'a'}, 'accept'], 2)
+    test('should match case-insensitively against uppercase',
+         {'a': 0, 'A': 0},
+         [{'iname': 'A'}, 'accept'], 2)
+    test('should match leading glob',
+         {'a': 0, 'aa': 0, 'b': 0},
+         [{'name': '*a'}, 'accept'], 2)
   })
 
 })
