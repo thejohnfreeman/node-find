@@ -51,7 +51,7 @@ parameters.
 [graceful-fs]: https://github.com/isaacs/node-graceful-fs
 [stats]: http://nodejs.org/api/fs.html#fs_class_fs_stats
 [find-expr]: http://www.gnu.org/software/findutils/manual/html_mono/find.html#find-Expressions
-[tests]: https://github.com/thejohnfreeman/node-find/tree/master/test
+[tests]: https://github.com/thejohnfreeman/node-find/blob/master/test/tests.js
 
 ### `find(paths...)`                                                                                                
     

@@ -35,8 +35,9 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "karma": "~0.12.22",
-    "should": "~4.0.4"
+    "should": "~4.0.4",
+    "mocha": "~1.21.4",
+    "terminus": "~1.0.10"
   },
   "scripts": {
     "test": "mocha"
