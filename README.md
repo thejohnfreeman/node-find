@@ -8,6 +8,7 @@ An approximation of GNU find as a [vinyl][] stream.
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
 [![Coverage Status](https://coveralls.io/repos/github/thejohnfreeman/node-find/badge.svg?branch=master)](https://coveralls.io/github/thejohnfreeman/node-find?branch=master)
 [![Dependency Status](https://gemnasium.com/badges/github.com/thejohnfreeman/node-find.svg)](https://gemnasium.com/github.com/thejohnfreeman/node-find)
+[![Code Climate](https://codeclimate.com/github/thejohnfreeman/node-find/badges/gpa.svg)](https://codeclimate.com/github/thejohnfreeman/node-find)
 
 
 ## Usage
