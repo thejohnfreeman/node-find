@@ -6,6 +6,7 @@ An approximation of GNU find as a [vinyl][] stream.
 
 [![Build Status](https://travis-ci.org/thejohnfreeman/node-find.svg?branch=master)](https://travis-ci.org/thejohnfreeman/node-find)
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
+[![Coverage Status](https://coveralls.io/repos/github/thejohnfreeman/node-find/badge.svg?branch=master)](https://coveralls.io/github/thejohnfreeman/node-find?branch=master)
 
 ## Usage
 
