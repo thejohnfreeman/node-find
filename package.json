@@ -36,11 +36,12 @@
   "license": "MIT",
   "devDependencies": {
     "mocha": "~1.21.4",
+    "nyc": "^10.0.0",
     "should": "~4.0.4",
     "standard": "^8.6.0",
     "terminus": "~1.0.10"
   },
   "scripts": {
-    "test": "standard && mocha"
+    "test": "standard && nyc --check-coverage --lines 86 --statements 86 --functions 80 --branches 72 mocha"
   }
 }
