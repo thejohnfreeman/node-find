@@ -5,6 +5,7 @@ An approximation of GNU find as a [vinyl][] stream.
 [vinyl]: https://github.com/wearefractal/vinyl
 
 [![Build Status](https://travis-ci.org/thejohnfreeman/node-find.svg?branch=master)](https://travis-ci.org/thejohnfreeman/node-find)
+[![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
 
 ## Usage
 
