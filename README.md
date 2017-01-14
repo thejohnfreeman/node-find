@@ -4,6 +4,8 @@ An approximation of GNU find as a [vinyl][] stream.
 
 [vinyl]: https://github.com/wearefractal/vinyl
 
+[![Build Status](https://travis-ci.org/thejohnfreeman/node-find.svg?branch=master)](https://travis-ci.org/thejohnfreeman/node-find)
+
 ## Usage
 
 ### `find([opts])`
