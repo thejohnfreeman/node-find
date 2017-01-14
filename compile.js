@@ -4,33 +4,33 @@
  * separator (e.g. '/' on Unix).
  * @return regex
  */
-function glob2regex(glob, matchSep) {
+function glob2regex (glob, matchSep) {
   var any = matchSep ? '.' : '[^/]'
   return glob
-  .replace(new RegExp('(\\\\)?\\*', 'g'), function($0, $1) {
+  .replace(new RegExp('(\\\\)?\\*', 'g'), function ($0, $1) {
     return $1 ? $0 : (any + '*')
   })
-  .replace(new RegExp('(\\\\)?\\?', 'g'), function($0, $1) {
+  .replace(new RegExp('(\\\\)?\\?', 'g'), function ($0, $1) {
     return $1 ? $0 : any
   })
 }
 
 // false, true -------------------------------------------------------------
 
-function falseExpr() {
+function falseExpr () {
   return false
 }
 
-function compileFalse() {
+function compileFalse () {
   return falseExpr
 }
 
-function trueExpr() {
+function trueExpr () {
   return true
 }
 
-function compileTrue() {
-  return falseExpr
+function compileTrue () {
+  return trueExpr
 }
 
 // type --------------------------------------------------------------------
@@ -42,87 +42,87 @@ var METHOD_FOR_TYPE = {
   f: 'isFile',
   l: 'isSymbolicLink',
   p: 'isFIFO',
-  s: 'isSocket',
+  s: 'isSocket'
 }
 
-function compileType(types) {
+function compileType (types) {
   types = types.split('')
-  methods = types.map(function(t) { return METHOD_FOR_TYPE[t] })
-  return function typeExpr(stream, file) {
-    return methods.some(function(m) { return file.stats[m]() })
+  var methods = types.map(function (t) { return METHOD_FOR_TYPE[t] })
+  return function typeExpr (stream, file) {
+    return methods.some(function (m) { return file.stats[m]() })
   }
 }
 
 // name, path, regex -------------------------------------------------------
 
-function compileName(glob, flags) {
+function compileName (glob, flags) {
   var pat = new RegExp('^.*/' + glob2regex(glob) + '$', flags)
-  return function nameExpr(stream, file) {
+  return function nameExpr (stream, file) {
     return pat.test(file.path)
   }
 }
 
-function compileIname(glob) {
+function compileIname (glob) {
   return compileName(glob, 'i')
 }
 
-function compilePath(glob, flags) {
+function compilePath (glob, flags) {
   var pat = new RegExp('^' + glob2regex(glob, true) + '$', flags)
-  return function pathExpr(stream, file) {
+  return function pathExpr (stream, file) {
     return pat.test(file.path)
   }
 }
 
-function compileIpath(glob) {
+function compileIpath (glob) {
   return compilePath(glob, 'i')
 }
 
-function compileRegex(pat) {
-  return function regexExpr(stream, file) {
+function compileRegex (pat) {
+  return function regexExpr (stream, file) {
     return pat.test(file.path)
   }
 }
 
 // accept ------------------------------------------------------------------
 
-function acceptExpr(stream, file) {
+function acceptExpr (stream, file) {
   stream.accept(file)
   return true
 }
 
-function compileAccept() {
+function compileAccept () {
   return acceptExpr
 }
 
 // prune -------------------------------------------------------------------
 
-function pruneExpr(stream, file) {
+function pruneExpr (stream, file) {
   file.recurse = false
   return true
 }
 
-function compilePrune() {
+function compilePrune () {
   return pruneExpr
 }
 
 // not ---------------------------------------------------------------------
 
-function compileNot(expr) {
+function compileNot (expr) {
   var func = compileExpr(expr)
-  return function notExpr(stream, file) {
+  return function notExpr (stream, file) {
     return !func(stream, file)
   }
 }
 
 // or ----------------------------------------------------------------------
 
-function compileOr(exprs) {
+function compileOr (exprs) {
   if (!Array.isArray(exprs)) {
-    throw 'or-expression must be a list of expressions'
+    throw new Error('or-expression must be a list of expressions')
   }
   var funcs = exprs.map(compileExpr)
-  return function orExpr(stream, file) {
-    return funcs.some(function(func) {
+  return function orExpr (stream, file) {
+    return funcs.some(function (func) {
       return func(stream, file)
     })
   }
@@ -132,26 +132,26 @@ function compileOr(exprs) {
 
 var COMPILERS = {
   'accept': compileAccept,
-  'and':    compileExpr,
-  'false':  compileFalse,
-  'iname':  compileIname,
-  'ipath':  compileIpath,
-  'name':   compileName,
-  'not':    compileNot,
-  'path':   compilePath,
-  'prune':  compilePrune,
-  'regex':  compileRegex,
-  'or':     compileOr,
-  'true':   compileTrue,
-  'type':   compileType,
+  'and': compileExpr,
+  'false': compileFalse,
+  'iname': compileIname,
+  'ipath': compileIpath,
+  'name': compileName,
+  'not': compileNot,
+  'path': compilePath,
+  'prune': compilePrune,
+  'regex': compileRegex,
+  'or': compileOr,
+  'true': compileTrue,
+  'type': compileType
 }
 
-function compileExpr(expr) {
+function compileExpr (expr) {
   var funcs
   if (Array.isArray(expr)) {
     funcs = expr.map(compileExpr)
   } else if (typeof expr === 'object') {
-    funcs = Object.keys(expr).map(function(key) {
+    funcs = Object.keys(expr).map(function (key) {
       // Compiler can be unary or constant function. Constant functions will
       // ignore the argument.
       return COMPILERS[key](expr[key])
@@ -163,8 +163,8 @@ function compileExpr(expr) {
 
   var func
   if (funcs.length) {
-    func = function andExpr(stream, file) {
-      return funcs.every(function(func) {
+    func = function andExpr (stream, file) {
+      return funcs.every(function (func) {
         return func(stream, file)
       })
     }
@@ -177,9 +177,9 @@ function compileExpr(expr) {
 
 // root --------------------------------------------------------------------
 
-function compileRoot(exprs) {
+function compileRoot (exprs) {
   var func = compileExpr(exprs)
-  return function rootExpr(stream, file) {
+  return function rootExpr (stream, file) {
     func(stream, file)
     stream.recurse(file)
   }

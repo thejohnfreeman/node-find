@@ -1,15 +1,16 @@
-var find     = require('..')
-var Fs       = require('./fs')
-var should   = require('should')
-var through2 = require('through2')
+/* eslint-env mocha */
+
+var find = require('..')
+var FileSystem = require('./fs')
+require('should')
 var terminus = require('terminus')
 
-function testWith(desc, opts, paths) {
-  it(desc, function(done) {
+function testWith (desc, opts, paths) {
+  it(desc, function (done) {
     find(opts)
-    .pipe(terminus.concat({objectMode: true}, function(files) {
+    .pipe(terminus.concat({objectMode: true}, function (files) {
       files.length.should.equal(paths.length)
-      files.forEach(function(file) {
+      files.forEach(function (file) {
         paths.should.containEql(file.path)
       })
       done()
@@ -17,22 +18,21 @@ function testWith(desc, opts, paths) {
   })
 }
 
-function test(desc, tree, expr, paths) {
-    testWith(desc,
-             /*opts=*/{paths: ['/'], fs: new Fs(tree), expr: expr},
+function test (desc, tree, expr, paths) {
+  testWith(desc,
+             /* opts= */{paths: ['/'], fs: new FileSystem(tree), expr: expr},
              paths)
 }
 
-describe('find', function() {
-
+describe('find', function () {
   test('should find everything by default',
        {}, ['accept'], ['/'])
 
   testWith('should stop at max depth',
-           {paths: ['/'], fs: new Fs({'x': {'y': 0}}), maxDepth: 1},
+           {paths: ['/'], fs: new FileSystem({'x': {'y': 0}}), maxDepth: 1},
            ['/', '/x'])
 
-  describe('name expression', function() {
+  describe('name expression', function () {
     test('should match exactly',
          {'a': 0, 'aa': 0, 'b': 0},
          [{'name': 'a'}, 'accept'],
@@ -63,7 +63,7 @@ describe('find', function() {
          ['/x', '/x/x'])
   })
 
-  describe('path expression', function() {
+  describe('path expression', function () {
     test('should match exactly',
          {'x': {'a': 0}},
          [{'path': '/x/a'}, 'accept'],
@@ -98,21 +98,21 @@ describe('find', function() {
          ['/x', '/x/a', '/X', '/X/A'])
   })
 
-  describe('prune expression', function() {
+  describe('prune expression', function () {
     test('should remove matches',
          {'x': {'x': 0}},
          [{'name': 'x'}, 'prune', 'accept'],
          ['/x'])
     test('should not implicitly accept',
          {'x': {'a': 0}, 'y': {'b': 0}},
-         {'or': [
+      {'or': [
            [{'name': 'x'}, 'prune'],
-           'accept'
-         ]},
+        'accept'
+      ]},
          ['/', '/y', '/y/b'])
   })
 
-  describe('type expression', function() {
+  describe('type expression', function () {
     test('should match directories',
          {'x': 0},
          [{'type': 'd'}, 'accept'],
@@ -122,6 +122,5 @@ describe('find', function() {
          [{'type': 'f'}, 'accept'],
          ['/x'])
   })
-
 })
 
