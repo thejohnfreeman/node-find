@@ -43,7 +43,7 @@
     "terminus": "^1.1.0"
   },
   "scripts": {
-    "test": "standard && nyc --check-coverage --lines 86 --statements 86 --functions 80 --branches 72 mocha",
+    "test": "standard && nyc --check-coverage --lines 86 --statements 86 --functions 80 --branches 71 mocha",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   }
 }
