@@ -1,6 +1,6 @@
 {
   "name": "node-find",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Approximation of GNU find as a vinyl file stream.",
   "homepage": "http://github.com/thejohnfreeman/node-find",
   "repository": "git://github.com/thejohnfreeman/node-find.git",
