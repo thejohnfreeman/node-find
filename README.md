@@ -4,10 +4,11 @@ An approximation of GNU find as a [vinyl][] stream.
 
 [vinyl]: https://github.com/wearefractal/vinyl
 
-[![Build Status](https://travis-ci.org/thejohnfreeman/node-find.svg?branch=master)](https://travis-ci.org/thejohnfreeman/node-find)
-[![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
-[![Coverage Status](https://coveralls.io/repos/github/thejohnfreeman/node-find/badge.svg?branch=master)](https://coveralls.io/github/thejohnfreeman/node-find?branch=master)
+[![npm](https://img.shields.io/npm/v/node-find.svg)](https://www.npmjs.com/package/node-find)
 [![Dependency Status](https://gemnasium.com/badges/github.com/thejohnfreeman/node-find.svg)](https://gemnasium.com/github.com/thejohnfreeman/node-find)
+[![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
+[![Build Status](https://travis-ci.org/thejohnfreeman/node-find.svg?branch=master)](https://travis-ci.org/thejohnfreeman/node-find)
+[![Coverage Status](https://coveralls.io/repos/github/thejohnfreeman/node-find/badge.svg?branch=master)](https://coveralls.io/github/thejohnfreeman/node-find?branch=master)
 [![Code Climate](https://codeclimate.com/github/thejohnfreeman/node-find/badges/gpa.svg)](https://codeclimate.com/github/thejohnfreeman/node-find)
 
 
