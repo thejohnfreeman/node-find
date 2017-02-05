@@ -1,3 +1,5 @@
+'use strict'
+
 const compile = require('./compile')
 const extend = require('extend')
 const fs = require('graceful-fs') || require('fs')
