@@ -1,10 +1,10 @@
-var compile = require('./compile')
-var extend = require('extend')
-var fs = require('graceful-fs') || require('fs')
-var Path = require('path')
-var Readable = require('readable-stream').Readable
-var util = require('util')
-var Vinyl = require('vinyl')
+const compile = require('./compile')
+const extend = require('extend')
+const fs = require('graceful-fs') || require('fs')
+const Path = require('path')
+const Readable = require('readable-stream').Readable
+const util = require('util')
+const Vinyl = require('vinyl')
 
 /* A Stream can be turned into an EventEmitter, but not vice versa, because
  * EventEmitters have no sense of "backpressure", i.e. blocking when their
@@ -25,30 +25,36 @@ var Vinyl = require('vinyl')
  * : cannot prune branches
  */
 
+const customProps = ['ppbase', 'level', 'child', 'pppath']
+
 /**
  * @property base String path where the search started.
  * @property ppbase String pretty-printed form of `base`, passed by the user.
  * @property path String path to the file.
  * @property level number the file's depth in the search tree.
  */
-function File (base, ppbase, path, level) {
-  Vinyl.call(this, {base: base, path: path})
-  this.ppbase = ppbase
-  this.level = level
+class File extends Vinyl {
+  constructor (base, ppbase, path, level) {
+    super({base: base, path: path})
+    this.ppbase = ppbase
+    this.level = level
+  }
+
+  child (fname) {
+    const path = Path.join(this.path, fname)
+    return new File(this.base, this.ppbase, path, this.level + 1)
+  }
+
+  pppath () {
+    return this.path.replace(this.base, this.ppbase)
+  }
+
+  static isCustomProp (name) {
+    return super.isCustomProp(name) && customProps.indexOf(name) < 0
+  }
 }
 
-util.inherits(File, Vinyl)
-
-File.prototype.child = function child (fname) {
-  var path = Path.join(this.path, fname)
-  return new File(this.base, this.ppbase, path, this.level + 1)
-}
-
-File.prototype.pppath = function pppath () {
-  return this.path.replace(this.base, this.ppbase)
-}
-
-var defaultOpts = {
+const defaultOpts = {
   fs: fs,
   paths: ['.'],
   maxDepth: Infinity,
@@ -81,12 +87,12 @@ function FindStream (opts) {
     this.opts.filter = compile(this.opts.expr)
   }
 
-  var files = this.opts.paths.map(function (ppbase) {
-    var path = Path.resolve(process.cwd(), ppbase)
+  const files = this.opts.paths.map(function (ppbase) {
+    const path = Path.resolve(process.cwd(), ppbase)
     return new File(path, ppbase, path, /* level= */0)
   })
-  var self = this
-  var done = function () {
+  const self = this
+  const done = function () {
     self.push(null)
   }
   this.enqueue(files, done)
@@ -106,9 +112,9 @@ FindStream.prototype.enqueue = function enqueue (files, done) {
   }
 
   // Done only after all subpaths are done.
-  var bar = barrier(files.length, done)
+  const bar = barrier(files.length, done)
 
-  var self = this
+  const self = this
   files.forEach(function (file) {
     self.opts.fs.lstat(file.path, function (err, stats) {
       if (err) {
@@ -156,12 +162,12 @@ FindStream.prototype.recurse = function recurse (file) {
     return file.done()
   }
 
-  var self = this
+  const self = this
   this.opts.fs.readdir(file.path, function (err, fnames) {
     if (err) {
       self.emit('error', err)
     }
-    var files = fnames.map(file.child.bind(file))
+    const files = fnames.map(file.child.bind(file))
     self.enqueue(files, file.done)
   })
 }

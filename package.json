@@ -30,7 +30,7 @@
     "extend": "^3.0.0",
     "readable-stream": "^2.2.2",
     "through2": "^2.0.3",
-    "vinyl": "~0.3.2",
+    "vinyl": "^2.0.1",
     "yargs": "^6.6.0"
   },
   "license": "MIT",
