@@ -2,17 +2,15 @@
 
 var find = require('..')
 var FileSystem = require('./fs')
-require('should')
 var terminus = require('terminus')
 
 function testWith (desc, opts, paths) {
   it(desc, function (done) {
     find(opts)
     .pipe(terminus.concat({objectMode: true}, function (files) {
-      files.length.should.equal(paths.length)
-      files.forEach(function (file) {
-        paths.should.containEql(file.path)
-      })
+      expect(files.length).toBe(paths.length)
+      files.forEach(file => expect(paths).toContain(file.path))
+      // expect(files.map(file => file.path)).toEqual(paths)
       done()
     }))
   })
