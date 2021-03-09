@@ -24,7 +24,7 @@
   ],
   "main": "index.js",
   "optionalDependencies": {
-    "graceful-fs": "~3.0.2"
+    "graceful-fs": "^4.1.0"
   },
   "dependencies": {
     "extend": "^3.0.0",
@@ -39,11 +39,10 @@
     "mocha": "^3.2.0",
     "nyc": "^10.0.0",
     "should": "^11.1.2",
-    "standard": "^8.6.0",
     "terminus": "^1.1.0"
   },
   "scripts": {
-    "test": "standard && nyc --check-coverage --lines 86 --statements 86 --functions 80 --branches 71 mocha",
+    "test": "nyc --check-coverage --lines 86 --statements 86 --functions 80 --branches 71 mocha",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   }
 }
