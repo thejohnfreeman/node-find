@@ -13,8 +13,14 @@ function regexEscape(pattern: string) {
  * @return regex
  */
 function glob2regex(glob: string, matchSep: boolean = false): RegExp {
-  const any = matchSep ? '.' : `[^${regexEscape(_sep)}]`
+  // It seems most (all?) popular glob libraries forbid backslashes as path
+  // separators in globs. Trying to figure out when a backslash is escaping
+  // versus separating is a nightmare. Like them, we presume that every
+  // unescaped forward slash is a path separator.
+  const sep = regexEscape(_sep)
+  const any = matchSep ? '.' : `[^${sep}]`
   const pattern = glob
+    .replace(/(?<!\\)\//g, sep)
     .replace(/(?<!\\)\*/g, any + '*')
     .replace(/(?<!\\)\?/g, any)
   return new RegExp(`^${pattern}$`)
