@@ -1,6 +1,11 @@
 import { readdir, stat } from 'fs/promises'
 import { sep as _sep } from 'path'
 
+function regexEscape(pattern: string) {
+  // :( https://github.com/tc39/proposal-regex-escaping/issues/37
+  return pattern.replace(/\\/g, '\\\\')
+}
+
 /**
  * @param glob string Shell glob expression.
  * @param matchSep boolean Whether wildcards should match the path component
@@ -8,7 +13,7 @@ import { sep as _sep } from 'path'
  * @return regex
  */
 function glob2regex(glob: string, matchSep: boolean = false): RegExp {
-  const any = matchSep ? '.' : `[^${_sep}]`
+  const any = matchSep ? '.' : `[^${regexEscape(_sep)}]`
   const pattern = glob
     .replace(/(?<!\\)\*/g, any + '*')
     .replace(/(?<!\\)\?/g, any)
