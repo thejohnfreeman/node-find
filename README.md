@@ -4,8 +4,8 @@ An approximation of GNU find as an asynchronous iterator.
 
 [![npm](https://img.shields.io/npm/v/node-find.svg)](https://www.npmjs.com/package/node-find)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
-[![Build Status](https://travis-ci.org/thejohnfreeman/node-find.svg?branch=master)](https://travis-ci.org/thejohnfreeman/node-find)
-[![Coverage Status](https://coveralls.io/repos/github/thejohnfreeman/node-find/badge.svg?branch=master)](https://coveralls.io/github/thejohnfreeman/node-find?branch=master)
+[![workflow: test](https://github.com/thejohnfreeman/node-find/actions/workflows/test.yml/badge.svg)](https://github.com/thejohnfreeman/node-find/actions/workflows/test.yml?query=branch%3Amaster)
+[![Coveralls](https://coveralls.io/repos/github/thejohnfreeman/node-find/badge.svg?branch=master)](https://coveralls.io/github/thejohnfreeman/node-find?branch=master)
 [![Code Climate](https://codeclimate.com/github/thejohnfreeman/node-find/badges/gpa.svg)](https://codeclimate.com/github/thejohnfreeman/node-find)
 
 
