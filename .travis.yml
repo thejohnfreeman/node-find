@@ -3,6 +3,4 @@ node_js:
   - "node"
   - 15
   - 14
-  - 13
-  - 12
-  - 11
+  # Node 14 added fs/promises.
