@@ -1,7 +1,7 @@
 {
   "name": "node-find",
   "version": "0.6.1",
-  "description": "Approximation of GNU find as a vinyl file stream.",
+  "description": "Approximation of GNU find as an asynchronous iterator.",
   "homepage": "http://github.com/thejohnfreeman/node-find",
   "repository": "git://github.com/thejohnfreeman/node-find.git",
   "author": {
@@ -17,28 +17,23 @@
     "recurse",
     "recursive",
     "directory",
-    "files",
-    "gulp",
-    "stream",
-    "readable"
+    "files"
   ],
   "main": "index.js",
   "optionalDependencies": {
     "graceful-fs": "^4.1.0"
   },
-  "dependencies": {
-    "extend": "^3.0.0",
-    "readable-stream": "^2.2.2",
-    "through2": "^2.0.3",
-    "vinyl": "^2.0.1",
-    "yargs": "^6.6.0"
-  },
+  "dependencies": {},
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^26.0.20",
     "jest": "^26.6.3",
-    "terminus": "^1.1.0"
+    "prettier": "^2.2.1",
+    "ts-jest": "^26.5.3",
+    "typescript": "^4.2.3"
   },
   "scripts": {
+    "build": "tsc --project tsconfig.json",
     "test": "jest"
   }
 }
