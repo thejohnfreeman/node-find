@@ -5,4 +5,4 @@ node_js:
   - 14
   # Node 14 added fs/promises.
 script:
-  - npm test && npm run coveralls
+  - npm test && npm run coverage
