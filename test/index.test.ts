@@ -1,3 +1,4 @@
+import { sep } from 'path'
 import { chdir } from 'process'
 import { find, always, name, path, type, not, prune } from '..'
 
@@ -54,14 +55,20 @@ describe('find', () => {
   })
 
   describe('path expression', function () {
-    check('should match exactly', path('./a/b/c'), {}, ['./a/b/c'])
-    check('should not match name', path('a'), {}, [])
-    check('should not match subpath', path('a/a'), {}, [])
-    check('should match trailing glob', path('./a/b*'), {}, [
+    const path_ = (glob: string) => path(glob.split('/').join(sep))
+
+    check('should match exactly', path_('./a/b/c'), {}, ['./a/b/c'])
+
+    check('should not match name', path_('a'), {}, [])
+
+    check('should not match subpath', path_('a/a'), {}, [])
+
+    check('should match trailing glob', path_('./a/b*'), {}, [
       './a/b',
       './a/b/c',
     ])
-    check('should match leading glob', path('*b/c'), {}, ['./a/b/c'])
+
+    check('should match leading glob', path_('*b/c'), {}, ['./a/b/c'])
   })
 
   describe('prune expression', function () {
@@ -82,6 +89,7 @@ describe('find', () => {
       './a/a',
       './a/b',
     ])
+
     check('should match files', type('f'), {}, [
       './a/a/b',
       './a/a/bb',
