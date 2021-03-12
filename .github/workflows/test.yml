@@ -31,12 +31,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           flag-name: ${{ matrix.os }}-node-${{ matrix.node }}
           parallel: true
-  finish:
+  coverage:
+    name: Aggregate coverages
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Aggregate coverages
-        uses: coverallsapp/github-action@master
+      - uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
