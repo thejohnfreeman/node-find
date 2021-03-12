@@ -110,9 +110,8 @@ export class Path {
 }
 
 export async function* find(
-  start: string,
   filter: Filter = always,
-  { maxDepth } = { maxDepth: undefined }
+  { start = '.', maxDepth }: { start?: string; maxDepth?: number } = {}
 ) {
   const prefix = []
   const stack = [[start]]
