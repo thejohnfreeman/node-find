@@ -8,7 +8,7 @@ import { sep as _sep } from 'path'
  * @return regex
  */
 function glob2regex(glob: string, matchSep: boolean = false): RegExp {
-  const any = matchSep ? '.' : '[^/]'
+  const any = matchSep ? '.' : `[^${_sep}]`
   const pattern = glob
     .replace(/(?<!\\)\*/g, any + '*')
     .replace(/(?<!\\)\?/g, any)
