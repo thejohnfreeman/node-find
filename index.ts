@@ -29,6 +29,13 @@ export const path = (glob: string) => async (path: Path) => ({
   include: glob2regex(glob, true).test(path.toString()),
 })
 
+export const regex = (pattern: string | RegExp) => {
+  const r = new RegExp(pattern)
+  return async (path: Path) => ({
+    include: r.test(path.toString()),
+  })
+}
+
 /** A map associating characters, chosen by GNU find, to file types. */
 var METHOD_FOR_TYPE = {
   b: 'isBlockDevice',
@@ -57,15 +64,27 @@ export const not = (filter: Filter) => async (path: Path) => {
   return { include: !include, ascend }
 }
 
-export const or = (...conditions) => (path: Path): Decision => {
-  let ascend = false
-  for (const condition of conditions) {
-    const decision = condition(path)
-    ascend ||= decision.ascend
+export const or = (...filters: Filter[]) => async (path: Path) => {
+  for (const filter of filters) {
+    const decision = await filter(path)
     if (decision.include) {
-      return { include: true, ascend }
+      return decision
     }
   }
+  return { include: false }
+}
+
+export const and = (...filters: Filter[]) => async (path: Path) => {
+  let ascend = false
+  for (const filter of filters) {
+    const decision = await filter(path)
+    if (!decision.include) {
+      return { include: false, ascend }
+    }
+    // Only read ascend from decisions that include.
+    ascend ||= decision.ascend
+  }
+  return { include: true, ascend }
 }
 
 export class Path {

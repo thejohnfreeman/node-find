@@ -23,10 +23,10 @@
   "optionalDependencies": {
     "graceful-fs": "^4.1.0"
   },
-  "dependencies": {},
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^26.0.20",
+    "coveralls": "^3.1.0",
     "jest": "^26.6.3",
     "prettier": "^2.2.1",
     "ts-jest": "^26.5.3",
@@ -34,6 +34,7 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "jest"
+    "test": "jest --coverage",
+    "coverage": "cat coverage/lcov.info | coveralls"
   }
 }
