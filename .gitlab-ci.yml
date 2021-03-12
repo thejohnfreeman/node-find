@@ -1,4 +1,0 @@
-# https://docs.gitlab.com/ee/user/application_security/dependency_scanning/
-# https://about.gitlab.com/blog/2021/01/14/try-dependency-scanning/
-include:
-  - template: Dependency-Scanning.gitlab-ci.yml
