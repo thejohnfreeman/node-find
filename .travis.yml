@@ -1,8 +1,0 @@
-language: node_js
-node_js:
-  - "node"
-  - 15
-  - 14
-  # Node 14 added fs/promises.
-script:
-  - npm test && npm run coverage
