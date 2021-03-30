@@ -1,6 +1,6 @@
 {
   "name": "node-find",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Approximation of GNU find as an asynchronous iterator.",
   "homepage": "http://github.com/thejohnfreeman/node-find",
   "repository": "git://github.com/thejohnfreeman/node-find.git",
