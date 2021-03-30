@@ -93,5 +93,12 @@ describe('find', () => {
       './a/a/bb',
       './a/b/c',
     ])
+
+    check(
+      'should match the start when it is a file',
+      type('f'),
+      { start: './a/b/c' },
+      ['./a/b/c']
+    )
   })
 })
