@@ -31,6 +31,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           flag-name: ${{ matrix.os }}-node-${{ matrix.node }}
           parallel: true
+        continue-on-error: true
   coverage:
     name: Aggregate coverages
     needs: test
@@ -40,3 +41,4 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
+        continue-on-error: true
