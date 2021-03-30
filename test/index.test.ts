@@ -1,29 +1,12 @@
 import { sep } from 'path'
 import { chdir } from 'process'
-import { find, always, name, path, type, not, prune } from '..'
+import { always, name, path, type, not, and, prune } from '..'
+import { check, pushd, popd } from './common'
 
-function test1(desc, tree, expr, paths) {}
+describe('find abc', () => {
+  beforeAll(() => pushd('test/abc'))
+  afterAll(() => popd())
 
-async function toList<T>(iterator: AsyncIterable<T>): Promise<T[]> {
-  let items = []
-  for await (const item of iterator) {
-    items.push(item)
-  }
-  return items
-}
-
-function check(desc, filter, options, expected) {
-  test(desc, async () => {
-    let actual = await toList(find(filter, options)).then((paths) =>
-      paths.map((path) => path.toString('/'))
-    )
-    expect(actual).toEqual(expected)
-  })
-}
-
-chdir('test/abc')
-
-describe('find', () => {
   check('should find everything by default', always, {}, [
     '.',
     './a',
@@ -101,4 +84,21 @@ describe('find', () => {
       ['./a/b/c']
     )
   })
+})
+
+describe('find names', () => {
+  beforeAll(() => pushd('test/names'))
+  afterAll(() => popd())
+
+  check('should match extension', name('*.z'), {}, ['./x.y.z'])
+  check('should match type: file', type('f'), {}, ['./x.y.z'])
+  check('should match extension and type', and(name('*.z'), type('f')), {}, [
+    './x.y.z',
+  ])
+  check(
+    'should match extension and type at start',
+    and(name('*.z'), type('f')),
+    { start: './x.y.z' },
+    ['./x.y.z']
+  )
 })

@@ -143,8 +143,8 @@ export async function* find(
   filter: Filter = always,
   { start = '.', maxDepth }: { start?: string; maxDepth?: number } = {}
 ) {
-  const prefix = []
-  const stack = [[start]]
+  const prefix = start.split(_sep)
+  const stack = [[prefix.pop()]]
   do {
     let top = stack.pop()
     while (top.length > 0) {
